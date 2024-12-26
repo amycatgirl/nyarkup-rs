@@ -62,6 +62,10 @@ impl Lexer {
         match c {
             '=' => {
                 if self.match_char('=') {
+                    if self.peek() != ' ' {
+                        return ();
+                    }
+
                     self.next();
                     let started_at = self.current;
 
@@ -75,16 +79,23 @@ impl Lexer {
                 }
             }
 
+            '{' => {
+                self.start = self.current;
+                self.bold();
+            }
+
             // Ignore whitespace
             ' ' | '\r' | '\t' => (),
 
             '\n' => self.line += 1,
 
-            _ => panic!("fuck"),
+            _ => (),
         }
+
+        self.start = 0;
     }
 
-    fn is_at_end(&self) -> bool {
+    pub fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
     }
 
@@ -111,6 +122,29 @@ impl Lexer {
         }
 
         self.chars[self.current]
+    }
+
+    fn bold(&mut self) {
+        while self.peek() != '}' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                panic!("Not allowed to have new lines in bold tokens")
+            }
+
+            self.next();
+        }
+
+        if self.is_at_end() {
+            panic!("End of file reached.")
+        }
+
+        let value: Vec<char> = self.source[self.start..self.current]
+            .to_string()
+            .chars()
+            .collect();
+
+        println!("[BOLD] Got {:?} as my value", value);
+
+        self.add_token(TokenType::Bold(value));
     }
 
     fn add_token(&mut self, token: TokenType) {
