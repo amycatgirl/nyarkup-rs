@@ -43,7 +43,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(code: &str) -> Self {
+    pub fn new(code: String) -> Self {
         let chars: Vec<char> = code.chars().collect();
 
         Self {
@@ -51,7 +51,7 @@ impl Lexer {
             current: 0,
             line: 1,
             chars,
-            source: code.to_string(),
+            source: code,
             tokens: Vec::new(),
         }
     }
