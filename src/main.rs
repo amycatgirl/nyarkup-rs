@@ -9,4 +9,10 @@ fn main() {
     while !lexer.is_at_end() {
         lexer.scan_token();
     }
+
+    println!("Tokens:");
+
+    for token in lexer.tokens.iter() {
+        print!("{} ", token);
+    }
 }
