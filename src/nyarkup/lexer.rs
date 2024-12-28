@@ -4,13 +4,13 @@ use std::fmt::Display;
 pub enum TokenType {
     Section,
     Divider,
-    LCurlyBracket,
-    RCurlyBracket,
-    Underscore,
-    Tilde,
-    Accent,
-    Hyphen,
-    Equals,
+    Bold,
+    Italic,
+    Strikethrough,
+    Code,
+    CodeBlock,
+    Title,
+    Quote,
 }
 
 #[derive(Debug)]
@@ -46,7 +46,6 @@ impl Display for Token {
 pub struct Lexer {
     start: usize,
     current: usize,
-    line: usize,
 
     source: String,
     chars: Vec<char>,
@@ -61,7 +60,6 @@ impl Lexer {
         Self {
             start: 0,
             current: 0,
-            line: 1,
             chars,
             source: code,
             tokens: Vec::new(),
@@ -72,22 +70,43 @@ impl Lexer {
         let c = self.next();
 
         match c {
-            '{' => self.add_token(TokenType::LCurlyBracket),
-            '}' => self.add_token(TokenType::RCurlyBracket),
-            '_' => self.add_token(TokenType::Underscore),
-            '~' => self.add_token(TokenType::Tilde),
-            '`' => self.add_token(TokenType::Accent),
+            '{' | '}' => self.add_token(TokenType::Bold),
+            '_' => self.add_token(TokenType::Italic),
+            '~' => self.add_token(TokenType::Strikethrough),
+            '`' => {
+                self.start = self.current - 1;
+
+                if self.match_char('`') {
+                    if self.match_char('`') {
+                        self.add_token(TokenType::CodeBlock);
+                    }
+                } else {
+                    self.add_token(TokenType::Code)
+                }
+            }
             '-' => {
                 self.start = self.current - 1;
                 if self.match_char('-') {
                     if self.match_char('-') {
                         self.add_token(TokenType::Divider);
-                    } else {
+                    } else if self.peek() == ' ' {
                         self.add_token(TokenType::Section);
                     }
                 }
             }
-            '=' => self.add_token(TokenType::Equals),
+            '=' => {
+                self.start = self.current - 1;
+
+                if self.match_char('=') && self.peek() == ' ' {
+                    self.add_token(TokenType::Title);
+                }
+            }
+
+            '>' => {
+                if self.behind() == '\n' {
+                    self.add_token(TokenType::Quote);
+                }
+            }
             _ => (),
         }
 
@@ -104,6 +123,10 @@ impl Lexer {
         self.current += 1;
 
         self.chars[previous_position]
+    }
+
+    fn behind(&mut self) -> char {
+        self.chars[self.current - 2]
     }
 
     fn match_char(&mut self, expected: char) -> bool {
