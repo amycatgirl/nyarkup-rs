@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     Section,
     Divider,
@@ -13,7 +13,9 @@ pub enum TokenType {
     Quote,
 }
 
-#[derive(Debug)]
+// Note to self: The Copy trait is a subtrait of Clone. Which means that, to derive
+// The Copy trait, we need to _always_ derive Clone first.
+#[derive(Debug, Clone, Copy)]
 pub struct Token {
     token_type: TokenType,
     start: usize,
