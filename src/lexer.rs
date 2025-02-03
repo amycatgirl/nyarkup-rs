@@ -1,8 +1,7 @@
-use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 // TODO: CONVERT TO STRUCT
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub name: String,
     pub index: usize,
