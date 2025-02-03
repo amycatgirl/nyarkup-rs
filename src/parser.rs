@@ -1,16 +1,19 @@
 use super::lexer::Token;
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
 pub struct Parser {
     token_stream: Vec<Token>,
-    cursor: usize,
 }
 
+#[wasm_bindgen]
 impl Parser {
-    pub fn new(token_stream: Vec<Token>) -> Self {
-        Self {
-            token_stream,
-            cursor: 0,
-        }
+    #[wasm_bindgen(constructor)]
+    pub fn new(token_stream: JsValue) -> Self {
+        let mut ts: Vec<Token> = serde_wasm_bindgen::from_value(token_stream).unwrap();
+        ts.reverse();
+
+        Self { token_stream: ts }
     }
 
     pub fn validate_content(&mut self) -> bool {
@@ -27,11 +30,19 @@ impl Parser {
 
     fn eat_title(&mut self) -> bool {
         let token = self.scan_token();
-        if token.name == "Title".to_string() {
-            true
-        } else {
-            self.putback_token();
-            false
+        match token {
+            Some(t) => {
+                if t.name == "Title".to_string() {
+                    match self.lookahead().name.as_str() {
+                        "NewLine" => true,
+                        _ => false,
+                    }
+                } else {
+                    self.putback_token(t);
+                    false
+                }
+            }
+            None => false,
         }
     }
 
@@ -39,15 +50,20 @@ impl Parser {
         return true;
     }
 
-    fn scan_token(&mut self) -> Token {
-        let current_token: &Token = &self.token_stream[self.cursor];
-        self.cursor += 1;
-
-        return current_token.clone();
+    fn scan_token(&mut self) -> Option<Token> {
+        self.token_stream.pop()
     }
 
-    fn putback_token(&mut self) {
-        self.cursor -= 1;
+    fn lookahead(&self) -> Token {
+        return self
+            .token_stream
+            .get(self.token_stream.len() - 1)
+            .unwrap()
+            .clone();
+    }
+
+    fn putback_token(&mut self, token: Token) {
+        self.token_stream.push(token);
     }
 
     // [TODO] Errors!

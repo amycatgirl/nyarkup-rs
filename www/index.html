@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <title>Nyarkup-rs Playground</title>
+  <script src="../pkg/nyarkup_wasm.js" defer type="module"></script>
+</head>
+
+<body>
+  <h1>nyarkup-rs playground</h1>
+  <textarea id="inputarea"></textarea>
+  <span>Tokens: <code id="tokens">...</code></span>
+  <span>Is Valid: <code id="validdoc">...</code></span>
+</body>
+
+<script defer type="module">
+  import init, {Lexer, Parser} from "../pkg/nyarkup_wasm.js";
+
+  async function setup() {
+    await init();
+    document.getElementById("inputarea").addEventListener("input", (ev) => {
+      const lexer = new Lexer(ev.target.value);
+      const tokens = lexer.lex();
+      const parser = new Parser(tokens);
+
+      document.getElementById("tokens").innerText = "[" + tokens.map(x => x.name) + "]";
+      document.getElementById("validdoc").innerText = parser.validate_content();
+    })
+  }
+
+  setup();
+
+</script>
+
+</html>
