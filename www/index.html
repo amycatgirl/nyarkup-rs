@@ -21,7 +21,7 @@
     document.getElementById("inputarea").addEventListener("input", (ev) => {
       const lexer = new Lexer(ev.target.value);
       const tokens = lexer.lex();
-      const parser = new Parser(tokens);
+      const parser = new Parser(tokens, ev.target.value);
 
       document.getElementById("tokens").innerText = "[" + tokens.map(x => x.name) + "]";
       document.getElementById("validdoc").innerText = parser.validate_content();

@@ -1,19 +1,57 @@
+pub mod errors;
+
 use super::lexer::Token;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
+
+#[derive(Serialize, Deserialize)]
+enum NodeType {
+    Root = 0,
+    Title = 1,
+    Section = 2,
+    Bold = 3,
+    Italic = 4,
+    Strikethrough = 5,
+    InlineCode = 6,
+    CodeBlock = 7,
+    Quote = 8,
+}
+
+#[derive(Serialize, Deserialize)]
+#[wasm_bindgen]
+struct Node {
+    r#type: NodeType,
+    children: Option<Vec<Box<Node>>>,
+    length: usize,
+    starts_at: usize,
+}
+#[wasm_bindgen]
+impl Node {
+    pub fn get_children(&self) -> Result<JsValue, errors::NoChildren> {
+        match &self.children {
+            Some(value) => Ok(serde_wasm_bindgen::to_value(&value).unwrap()),
+            None => Err(errors::NoChildren),
+        }
+    }
+}
 
 #[wasm_bindgen]
 pub struct Parser {
     token_stream: Vec<Token>,
+    source: String,
 }
 
 #[wasm_bindgen]
 impl Parser {
     #[wasm_bindgen(constructor)]
-    pub fn new(token_stream: JsValue) -> Self {
+    pub fn new(token_stream: JsValue, source: String) -> Self {
         let mut ts: Vec<Token> = serde_wasm_bindgen::from_value(token_stream).unwrap();
         ts.reverse();
 
-        Self { token_stream: ts }
+        Self {
+            token_stream: ts,
+            source,
+        }
     }
 
     pub fn validate_content(&mut self) -> bool {
@@ -46,8 +84,24 @@ impl Parser {
         }
     }
 
+    fn eat_bold(&mut self) -> bool {
+        let token = self.scan_token();
+        let lookahead = self.lookahead();
+        match token {
+            Some(t) => {
+                if t.name == "BoldStart".to_string() && lookahead.name == "BoldEnd".to_string() {
+                    true
+                } else {
+                    self.putback_token(t);
+                    false
+                }
+            }
+            None => false,
+        }
+    }
+
     fn eat_text(&mut self) -> bool {
-        return true;
+        return self.eat_bold();
     }
 
     fn scan_token(&mut self) -> Option<Token> {
