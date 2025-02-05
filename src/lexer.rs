@@ -47,7 +47,6 @@ impl Lexer {
     }
 
     fn scan_token(&mut self) {
-        console::log_1(&format!("Index: {}", self.current).into());
         let c = self.next();
         self.actual = self.current - 1;
 
@@ -105,7 +104,15 @@ impl Lexer {
                 self.start = self.actual;
                 match self.match_char('=') {
                     true => {
-                        console::log_1(&format!("{}", self.actual - self.start).into());
+                        console::log_1(
+                            &format!(
+                                "{} - {} => {}",
+                                self.actual,
+                                self.start,
+                                self.actual - self.start
+                            )
+                            .into(),
+                        );
                         self.add_token(Token {
                             name: "Title".to_string(),
                             index: self.actual,
@@ -124,7 +131,7 @@ impl Lexer {
                             self.add_token(Token {
                                 name: "HorizontalRule".to_string(),
                                 index: self.actual,
-                                length: Some(self.actual - self.start),
+                                length: Some(self.current - self.start),
                             });
                         } else {
                             self.add_token(Token {

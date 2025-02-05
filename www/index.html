@@ -8,9 +8,13 @@
 
 <body>
   <h1>nyarkup-rs playground</h1>
-  <textarea id="inputarea"></textarea>
-  <span>Tokens: <code id="tokens">...</code></span>
-  <span>Is Valid: <code id="validdoc">...</code></span>
+  <div>
+    <textarea id="inputarea"></textarea>
+  </div>
+  <p>
+    <span>Tokens: <code id="tokens">...</code></span> <br />
+    <span>AST Representation: <pre id="validdoc">{}</pre></span>
+  </p>
 </body>
 
 <script defer type="module">
@@ -24,7 +28,7 @@
       const parser = new Parser(tokens, ev.target.value);
 
       document.getElementById("tokens").innerText = "[" + tokens.map(x => x.name) + "]";
-      document.getElementById("validdoc").innerText = parser.validate_content();
+      document.getElementById("validdoc").innerText = JSON.stringify(parser.parse(), null, 2);
     })
   }
 

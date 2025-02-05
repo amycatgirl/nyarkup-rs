@@ -3,9 +3,11 @@ pub mod errors;
 use super::lexer::Token;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
+use web_sys::console;
 
-#[derive(Serialize, Deserialize)]
-enum NodeType {
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
+#[wasm_bindgen]
+pub enum NodeType {
     Root = 0,
     Title = 1,
     Section = 2,
@@ -17,14 +19,15 @@ enum NodeType {
     Quote = 8,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[wasm_bindgen]
 struct Node {
-    r#type: NodeType,
+    pub r#type: NodeType,
     children: Option<Vec<Box<Node>>>,
-    length: usize,
-    starts_at: usize,
+    pub length: Option<usize>,
+    pub starts_at: Option<usize>,
 }
+
 #[wasm_bindgen]
 impl Node {
     pub fn get_children(&self) -> Result<JsValue, errors::NoChildren> {
@@ -54,54 +57,69 @@ impl Parser {
         }
     }
 
-    pub fn validate_content(&mut self) -> bool {
-        return self.eat();
-    }
+    pub fn parse(&mut self) -> Result<JsValue, errors::ParseError> {
+        let mut nodes = vec![];
 
-    fn eat(&mut self) -> bool {
-        self.eat_document()
-    }
-
-    fn eat_document(&mut self) -> bool {
-        self.eat_title() && self.eat_text()
-    }
-
-    fn eat_title(&mut self) -> bool {
-        let token = self.scan_token();
-        match token {
-            Some(t) => {
-                if t.name == "Title".to_string() {
-                    match self.lookahead().name.as_str() {
-                        "NewLine" => true,
-                        _ => false,
-                    }
-                } else {
-                    self.putback_token(t);
-                    false
+        while !self.is_out_of_tokens() {
+            console::log_1(&format!("Tokens: {:?}", self.token_stream).into());
+            match self.consume_title() {
+                Some(n) => {
+                    console::log_1(&"title node found".into());
+                    nodes.push(Box::new(n))
                 }
+                None => (),
             }
-            None => false,
+        }
+
+        let root_node = Node {
+            r#type: NodeType::Root,
+            children: Some(nodes),
+            length: None,
+            starts_at: None,
+        };
+        console::log_1(&format!("{:#?}", root_node).into());
+
+        Ok(serde_wasm_bindgen::to_value(&root_node).unwrap())
+    }
+
+    fn consume_title(&mut self) -> Option<Node> {
+        let token = self.scan_token().unwrap();
+
+        console::log_1(&format!("{:?}", token).into());
+
+        if token.name == "Title".to_string() {
+            console::log_1(&"title node".into());
+            match self.consume_new_line() {
+                Some(t) => Some(Node {
+                    r#type: NodeType::Title,
+                    children: None,
+                    length: Some(t.index - token.index),
+                    starts_at: Some(token.index),
+                }),
+                None => None,
+            }
+        } else {
+            None
         }
     }
 
-    fn eat_bold(&mut self) -> bool {
-        let token = self.scan_token();
-        let lookahead = self.lookahead();
-        match token {
-            Some(t) => {
-                if t.name == "BoldStart".to_string() && lookahead.name == "BoldEnd".to_string() {
-                    true
-                } else {
-                    self.putback_token(t);
-                    false
-                }
-            }
-            None => false,
-        }
+    fn is_out_of_tokens(&self) -> bool {
+        self.token_stream.len() <= 0
     }
 
-    fn eat_text(&mut self) -> bool {
-        return self.eat_bold();
+    fn consume_new_line(&mut self) -> Option<Token> {
+        let token = self.scan_token().unwrap();
+
+        console::log_1(&format!("{:?}", token).into());
+
+        if token.name == "NewLine".to_string() {
+            console::log_1(&"new line node".into());
+            Some(token)
+        } else {
+            self.putback_token(token);
+
+            None
+        }
     }
 
     fn scan_token(&mut self) -> Option<Token> {
