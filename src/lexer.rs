@@ -93,13 +93,6 @@ impl Lexer {
                     length: None,
                 });
             }
-            '>' => {
-                self.add_token(Token {
-                    name: "Quote".to_string(),
-                    index: self.actual,
-                    length: None,
-                });
-            }
             '=' => {
                 self.start = self.actual;
                 match self.match_char('=') {
@@ -143,6 +136,27 @@ impl Lexer {
                     }
                     false => (),
                 }
+            }
+            '"' => {
+                self.add_token(Token {
+                    name: "QMark".to_string(),
+                    index: self.actual,
+                    length: None,
+                });
+            }
+            '<' => {
+                self.add_token(Token {
+                    name: "LeftPBracket".to_string(),
+                    index: self.actual,
+                    length: None,
+                });
+            }
+            '>' => {
+                self.add_token(Token {
+                    name: "RightPBracket".to_string(),
+                    index: self.actual,
+                    length: None,
+                });
             }
             _ => (),
         }

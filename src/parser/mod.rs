@@ -137,24 +137,4 @@ impl Parser {
     fn putback_token(&mut self, token: Token) {
         self.token_stream.push(token);
     }
-
-    // [TODO] Errors!
-
-    // Language design is a time-consuming task, but it's soooooooo worth it
-
-    /*
-     * [INFO] I suck at making LL(1) grammar, it's my first time
-     * So um, have it if you want to request some changes or smth
-     * D -> E
-     * E -> E'
-     * E' -> T
-     * E' -> {E'}
-     * E' -> _E'_
-     * E' -> ~E'~
-     * E' -> > E'
-     * E' -> `e`
-     * E' -> e
-     * T -> == e
-     * T -> -- e
-     */
 }
